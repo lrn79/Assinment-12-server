@@ -22,8 +22,30 @@ async function run() {
         const productCollection = client.db('manufactureDB').collection('tools')
         const reviewCollection = client.db('manufactureDB').collection('review')
         const orderCollection = client.db('manufactureDB').collection('order')
+        const userCollection = client.db('manufactureDB').collection('users')
 
         // Start
+        // Get all users Api
+        app.get('/user', async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users)
+            // LINK : http://localhost:5000/user
+        })
+        // put all users
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            console.log(email)
+            const user = req.body;
+            const filter = { email: email }
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+
+
+        })
         // All Tools API 
         app.get('/allTools', async (req, res) => {
             const query = {};
