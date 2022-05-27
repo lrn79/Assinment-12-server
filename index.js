@@ -73,6 +73,13 @@ async function run() {
             res.send(items);
             // ALL Tools LINK : http://localhost:5000/allTools
         });
+        // Add New tools Or Products 
+        app.post('/addTools', async (req, res) => {
+            const newtools = req.body;
+            const result = await productCollection.insertOne(newtools);
+            res.send(result)
+        });
+
         // Get Order Now 
 
         app.get('/orderNow/:id', async (req, res) => {
