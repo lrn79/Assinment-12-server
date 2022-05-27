@@ -18,7 +18,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         await client.connect();
-        console.log('connect')
+
         const productCollection = client.db('manufactureDB').collection('tools')
         const reviewCollection = client.db('manufactureDB').collection('review')
         const orderCollection = client.db('manufactureDB').collection('order')
@@ -31,10 +31,18 @@ async function run() {
             res.send(users)
             // LINK : http://localhost:5000/user
         })
+        // requre admin
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            console.log(email)
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin })
+        })
         // put all users
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
-            console.log(email)
+
             const user = req.body;
             const filter = { email: email }
             const options = { upsert: true };
@@ -43,8 +51,19 @@ async function run() {
             };
             const result = await userCollection.updateOne(filter, updateDoc, options);
             res.send(result);
+        });
+        // Make Admin
 
+        app.put('/user/admin/:email', async (req, res) => {
+            const email = req.params.email;
 
+            const filter = { email: email }
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
         })
         // All Tools API 
         app.get('/allTools', async (req, res) => {
@@ -91,6 +110,14 @@ async function run() {
             const cursor = orderCollection.find(query);
             const items = await cursor.toArray();
             res.send(items);
+            // ALL Tools LINK : http://localhost:5000/allOrdered
+        });
+        // get my order
+        app.get('/allOrdered/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email }
+            const myOrder = await orderCollection.find(filter).toArray()
+            res.send(myOrder);
             // ALL Tools LINK : http://localhost:5000/allOrdered
         });
 
