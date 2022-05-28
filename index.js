@@ -122,7 +122,7 @@ async function run() {
             res.send(items);
             // ALL Tools LINK : http://localhost:5000/allReview
         });
-        // For adding a new Review
+        // For adding a new Reviews
         app.post('/addReview', async (req, res) => {
             const newReview = req.body;
             const result = await reviewCollection.insertOne(newReview);
