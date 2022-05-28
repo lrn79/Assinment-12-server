@@ -112,7 +112,7 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const service = await productCollection.findOne(query);
             res.send(service);
-            // Link : http://localhost:5000/orderNow/${id}.....
+            // Link : http://localhost:5000/orderNow/${id}......
         });
         // get Review Server
         app.get('/allReview', async (req, res) => {
