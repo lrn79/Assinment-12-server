@@ -4,6 +4,8 @@ const app = express();
 const port = process.env.PORT || 5000;
 require('dotenv').config();
 const { ObjectId, MongoClient, ServerApiVersion } = require('mongodb');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 
 
 
@@ -23,8 +25,22 @@ async function run() {
         const reviewCollection = client.db('manufactureDB').collection('review')
         const orderCollection = client.db('manufactureDB').collection('order')
         const userCollection = client.db('manufactureDB').collection('users')
+        const paymentCollection = client.db('manufactureDB').collection('payment')
 
         // Start
+
+        // Payment intent
+        app.post('/create-payment-intent', async (req, res) => {
+            const service = req.body;
+            const price = service.price;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
         // Get all users Api
         app.get('/user', async (req, res) => {
             const users = await userCollection.find().toArray();
@@ -88,7 +104,7 @@ async function run() {
             res.send(result);
         });
 
-        // Get Order Now 
+        // Get Order Now fdg
 
         app.get('/orderNow/:id', async (req, res) => {
             const id = req.params.id;
@@ -127,15 +143,40 @@ async function run() {
             res.send(items);
             // ALL Tools LINK : http://localhost:5000/allOrdered
         });
+        // For payment 
+        app.get('/allOrdered/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id)
+            const query = { _id: ObjectId(id) };
+            const service = await orderCollection.findOne(query);
+            res.send(service);
+            // Link : http://localhost:5000/allOrdered/${id}
+            // Link : http://localhost:5000/allOrdered/628f4ffa321cc4cc8859a6c1
+        });
         // get my order
-        app.get('/allOrdered/:email', async (req, res) => {
+        app.get('/ordered/:email', async (req, res) => {
             const email = req.params.email;
             const filter = { email: email }
             const myOrder = await orderCollection.find(filter).toArray()
             res.send(myOrder);
             // ALL Tools LINK : http://localhost:5000/allOrdered
         });
+        // For update
+        app.patch('/ordered/:id', async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
 
+            const result = await paymentCollection.insertOne(payment);
+            const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+            res.send(updatedDoc);
+        })
         // End
     }
     finally {
